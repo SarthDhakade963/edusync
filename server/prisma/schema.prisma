@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ROLE {
+  STUDENT
+  ADMIN
+}
+
+enum SubmissionStatus {
+  NOT_SUBMITTED
+  PENDING_CONFIRMATION
+  CONFIRMED
+}
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique 
+  password_hash String
+  role ROLE @default(STUDENT)
+  created_at DateTime @default(now())
+
+  ownedGroups Group[] @relation("GroupOwner")
+  groupMemberships GroupMember[] 
+  createdAssignments Assignment[] @relation("CreatedAssignments")
+  submission Submission[]
+  invitationSent Invitations[] @relation("InvitationSent")
+  invitationReceived Invitations[] @relation("InvitationReceived")
+}
+
+model Group {
+  id String @id @default(uuid())
+  name String
+  created_at DateTime @default(now())
+
+  ownerId String
+  owner User @relation("GroupOwner", fields: [ownerId], references: [id])
+
+  members GroupMember[]
+  submissions Submission[]
+  assignments Assignment[] @relation("GroupAssignments")
+  invitations Invitations[]
+}
+
+model GroupMember {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  groupId String
+  group Group @relation(fields: [groupId], references: [id])
+  
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model Assignment {
+  id String @id @default(uuid())
+  title String
+  description String
+  due_date DateTime
+  onedrive_link String
+  created_at DateTime @default(now())
+
+  created_by String
+  creator User @relation("CreatedAssignments", fields: [created_by], references: [id])
+
+  group Group[] @relation("GroupAssignments")
+  submission Submission[]
+}
+
+model Submission {
+  id String @id @default(uuid())
+  groupId String
+  group Group @relation(fields: [groupId], references: [id])
+
+  assignmentId String
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+
+  submitted_by String?
+  submitor User? @relation(fields: [submitted_by], references: [id])
+
+  status SubmissionStatus @default(NOT_SUBMITTED)
+  confirmed_at DateTime?
+}
+
+model Invitation {
+  id String @id @default(uuid())
+  groupId String
+  group Group @relation(fields: [groupId], references: [id])
+
+  invited_by String
+  invitor User @relation("InvitationSent",fields: [invited_by], references: [id])
+
+  invited_to String
+  invited User @relation("InvitationReceived",fields: [invited_to], references: [id])
+
+  status String @default("PENDING")
+  created_at DateTime @default(now())
+}
