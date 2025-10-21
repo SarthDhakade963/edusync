@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -37,13 +36,14 @@ model User {
   groupMemberships GroupMember[] 
   createdAssignments Assignment[] @relation("CreatedAssignments")
   submission Submission[]
-  invitationSent Invitations[] @relation("InvitationSent")
-  invitationReceived Invitations[] @relation("InvitationReceived")
+  invitationSent Invitation[] @relation("InvitationSent")
+  invitationReceived Invitation[] @relation("InvitationReceived")
 }
 
 model Group {
   id String @id @default(uuid())
   name String
+  description String
   created_at DateTime @default(now())
 
   ownerId String
@@ -52,7 +52,7 @@ model Group {
   members GroupMember[]
   submissions Submission[]
   assignments Assignment[] @relation("GroupAssignments")
-  invitations Invitations[]
+  invitations Invitation[]
 }
 
 model GroupMember {
