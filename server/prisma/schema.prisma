@@ -18,6 +18,12 @@ enum ROLE {
   ADMIN
 }
 
+enum InvitationStatus {
+  ACCEPTED
+  PENDING
+  DECLINED
+}
+
 enum SubmissionStatus {
   NOT_SUBMITTED
   PENDING_CONFIRMATION
@@ -45,6 +51,7 @@ model Group {
   name String
   description String
   created_at DateTime @default(now())
+  isOwner Boolean @default(false)
 
   ownerId String
   owner User @relation("GroupOwner", fields: [ownerId], references: [id])
@@ -110,6 +117,6 @@ model Invitation {
   invited_to String
   invited User @relation("InvitationReceived",fields: [invited_to], references: [id])
 
-  status String @default("PENDING")
+  status InvitationStatus @default(PENDING)
   created_at DateTime @default(now())
 }

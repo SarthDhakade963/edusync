@@ -26,17 +26,19 @@ export const createGroup = async (
       data: {
         name,
         description,
-        userId,
+        ownerId: userId,
         members: {
           create: {
             userId,
-            ownerId: true,
+            isOwner: true,
           },
         },
       },
 
       include: {
-        members: true,
+        members: {
+          user: true,
+        },
       },
     });
 
@@ -101,15 +103,22 @@ export const addUser = async (req: Request, res: Response) => {
 
 export const groupDetails = async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user.id;
     const { groupId } = req.params;
 
     const group = await prisma.group.findUnique({
       where: { id: groupId },
+      include: { members: { include: { user: true } } },
     });
 
     if (!group) {
       return res.status(404).json({ message: "Group does not exist" });
     }
+
+    const isMember = group.members.some(
+      (m: { userId: string }) => m.userId === userId
+    );
+    if (!isMember) return res.status(403).json({ message: "Access denied" });
 
     return res.status(200).json({
       group,
@@ -136,9 +145,10 @@ export const listStudentGroups = async (req: Request, res: Response) => {
         },
       },
     });
+
     const userGroups = groups.map((gm: { group: any }) => gm.group);
 
-    return res.status(201).json({ groups: userGroups });
+    return res.status(200).json({ groups: userGroups });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

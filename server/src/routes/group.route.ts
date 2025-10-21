@@ -11,9 +11,9 @@ import { authorize } from "../middleware/roleMiddleware";
 const router = express.Router();
 router.use(authenticate);
 
-router.post("/group", authorize("ADMIN"), createGroup);
-router.post("/group/add-user", authorize("STUDENT"), addUser);
-router.get("/group/:groupId", authorize("STUDENT"), groupDetails);
-router.get("/group-members", authorize("STUDENT"), listStudentGroups);
+router.post("/", createGroup);
+router.post("/add-user", authorize("ADMIN"), addUser);
+router.get("/:groupId", authorize("STUDENT"), groupDetails);
+router.get("/members", authorize("STUDENT"), listStudentGroups);
 
 export default router;

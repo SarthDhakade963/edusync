@@ -3,7 +3,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route";
-
+import groupRoutes from "./routes/group.route";
+import invitationRoutes from "./routes/invitation.route";
 dotenv.config();
 
 const app = express();
@@ -13,5 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/group", groupRoutes);
+app.use("/api/invitation", invitationRoutes);
 
 export default app;
