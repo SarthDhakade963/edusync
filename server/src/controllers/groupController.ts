@@ -84,6 +84,10 @@ export const groupDetails = async (req: Request, res: Response) => {
     const role = (req as any).user.role;
     const { groupId } = req.params;
 
+    if (!groupId) {
+      return res.status(404).json({ message: "Group id required" });
+    }
+
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {

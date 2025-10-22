@@ -10,12 +10,8 @@ import {
 const router = express.Router();
 router.use(authenticate, authorize("STUDENT"));
 
-router.post("/", authorize("STUDENT"), sendInvitation);
-router.get("/", authorize("STUDENT"), listInvitations);
-router.post(
-  "/:invitation_id/respond",
-  authorize("STUDENT"),
-  respondToInvitation
-);
+router.post("/", sendInvitation);
+router.get("/", listInvitations);
+router.post("/:invitation_id/respond", respondToInvitation);
 
 export default router;
