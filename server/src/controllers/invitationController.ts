@@ -24,6 +24,11 @@ export const sendInvitation = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Group does not exists" });
     }
 
+    if (group.ownerId !== fromUserId)
+      return res
+        .status(403)
+        .json({ message: "Only group owner can send invites" });
+
     const existingInvite = await prisma.invitation.findFirst({
       where: {
         groupId: groupId,
@@ -57,6 +62,10 @@ export const respondToInvitation = async (req: Request, res: Response) => {
     const { invitation_id } = req.params;
     const { accept } = req.body;
 
+    if (!invitation_id) {
+      return res.status(400).json({ message: "Invitation ID is required" });
+    }
+
     const invitation = await prisma.invitation.findUnique({
       where: { id: invitation_id },
     });
@@ -71,12 +80,14 @@ export const respondToInvitation = async (req: Request, res: Response) => {
     });
 
     if (accept) {
-      await prisma.groupMember.create({
-        data: {
-          groupId: invitation.groupId,
-          userId: receiverId,
-        },
+      const alreadyMember = await prisma.groupMember.findFirst({
+        where: { groupId: invitation.groupId, userId: receiverId },
       });
+      if (!alreadyMember) {
+        await prisma.groupMember.create({
+          data: { groupId: invitation.groupId, userId: receiverId },
+        });
+      }
     }
 
     return res.status(200).json({
@@ -89,7 +100,7 @@ export const respondToInvitation = async (req: Request, res: Response) => {
   }
 };
 
-export const listInvitation = async (req: Request, res: Response) => {
+export const listInvitations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
