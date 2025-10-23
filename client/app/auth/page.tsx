@@ -10,8 +10,11 @@ import {
   BookOpen,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function AuthPage() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,7 +38,10 @@ export default function AuthPage() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>): void => {
+  const handleSubmit = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    isSignup: boolean
+  ): Promise<void> => {
     e.preventDefault();
 
     if (!emailRegex.test(formData.email)) {
@@ -43,7 +49,64 @@ export default function AuthPage() {
       return;
     }
 
-    alert(isLogin ? "Login successful!" : "Account created successfully!");
+    try {
+      if (isSignup) {
+        // --- SIGNUP FLOW ---
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Registration failed");
+          return;
+        }
+
+        console.log("Signup successful:", data);
+
+        // After signup, automatically log in
+        const loginResult = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (loginResult?.error) {
+          alert("Login after signup failed");
+          return;
+        }
+
+        router.push(
+          data.role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
+        );
+        return;
+      }
+
+      // --- LOGIN FLOW ---
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (result?.error) {
+        alert("Invalid credentials");
+      } else {
+        alert("Login successful!");
+        router.push(
+          formData.role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred");
+    }
   };
 
   return (
@@ -65,7 +128,6 @@ export default function AuthPage() {
             Your comprehensive platform for managing academic excellence
           </p>
 
-          {/* Auth Image */}
           <div className="relative mb-8">
             <div className="absolute inset-0 bg-white rounded-full opacity-20 blur-2xl"></div>
             <Image
@@ -77,7 +139,6 @@ export default function AuthPage() {
             />
           </div>
 
-          {/* Feature Pills */}
           <div className="flex flex-wrap gap-3 justify-center mt-8">
             <div className="bg-white/20 backdrop-blur-md rounded-full px-6 py-3 flex items-center gap-2">
               <Users className="w-4 h-4 text-white" />
@@ -101,10 +162,8 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Right Half - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-linear-to-br from-gray-50 to-blue-50">
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center mb-8">
             <div className="bg-linear-to-br from-blue-600 to-blue-800 p-3 rounded-xl shadow-lg">
               <GraduationCap className="w-8 h-8 text-white" />
@@ -139,7 +198,7 @@ export default function AuthPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                    className="placeholder:text-gray-400 w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                   />
                 </div>
               )}
@@ -155,7 +214,7 @@ export default function AuthPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="placeholder:text-gray-400 w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                 />
               </div>
 
@@ -171,7 +230,7 @@ export default function AuthPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                    className="placeholder:text-gray-400 w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
                   />
                   <button
                     type="button"
@@ -247,7 +306,7 @@ export default function AuthPage() {
               )}
 
               <button
-                onClick={handleSubmit}
+                onClick={(e) => handleSubmit(e, !isLogin)}
                 className="w-full py-4 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mt-6"
               >
                 {isLogin ? "Sign In" : "Create Account"}

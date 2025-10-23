@@ -1,17 +1,112 @@
-// lib/auth.ts
-import api from "./api";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProviders from "next-auth/providers/credentials";
 
-export const login = async (email: string, password: string) => {
-  const res = await api.post("/auth/login", { email, password });
-  return res.data;
-};
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  accessToken?: string;
+}
 
-export const signup = async (body: { name: string; email: string; password: string; role?: string }) => {
-  const res = await api.post("/auth/signup", body);
-  return res.data;
-};
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProviders({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "text" },
+      },
+      async authorize(credentials): Promise<AuthUser | null> {
+        if (!credentials?.email && !credentials?.password) return null;
+        try {
+          // when the user wants to log in
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+              }),
+              credentials: "include",
+            }
+          );
 
-export const fetchCurrentUser = async () => {
-  const res = await api.get("/auth/me");
-  return res.data;
+          console.log("Response status: ", res);
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.log("Login failed response text: ", text);
+            return null;
+          }
+
+          const user = data.currentUser;
+          const accessToken = data.accessToken;
+
+          console.log("User from backend: ", user);
+
+          if (!user?.id || !user.email) return null;
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            accessToken: accessToken,
+          };
+        } catch (error) {
+          console.error("Auth error: ", error);
+          return null;
+        }
+      },
+    }),
+  ],
+
+  // instead of storing session in DB, we are using JSON Web Token to keep the session state
+  // our token from backend will be stored in cookies
+  session: {
+    strategy: "jwt",
+  },
+
+  callbacks: {
+    // token - the spring generated token
+    // account - credentials and oAuth info
+    // user - basic profile from provider or authorize
+    // profile - full profile data from provider
+
+    // handles authentication
+    async jwt({ token, user }) {
+      // how the frontend will send the spring jwt via nextauth so the whole chain is working
+
+      // if user is already logged via Credentials (Spring boot login)
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.role = user.role;
+        token.accessToken = user.accessToken;
+      }
+      return token;
+    },
+
+    // handles the session so that you can your backend from any page
+    async session({ session, token }) {
+      session.user = {
+        id: token.id as string,
+        email: token.email as string,
+        name: token.name as string,
+        role: token.role as string,
+      };
+      session.accessToken = token.accessToken as string;
+      return session;
+    },
+  },
+
+  secret: process.env.NEXTAUTH_SECRET,
 };
