@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { fetchWithToken } from "@/lib/fetchWithToken";
+import { useRouter } from "next/navigation";
 
 interface Group {
   id: string;
@@ -11,15 +13,18 @@ interface Group {
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await fetch("/api/groups", { credentials: "include" });
+        const res = await fetchWithToken("/group/all", {
+          credentials: "include",
+        });
         const data = await res.json();
-        setGroups(data);
+        setGroups(data.groups);
       } catch (err) {
         console.error(err);
       } finally {
@@ -35,7 +40,7 @@ export default function AdminDashboard() {
     if (!assignmentTitle) return;
 
     // Call backend API to create assignment for this group
-    fetch(`/api/groups/${groupId}/assignments`, {
+    fetchWithToken(`group/${groupId}/assignments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: assignmentTitle }),
@@ -62,6 +67,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups.map((group) => (
             <div
+              onClick={() => router.push("./group/[groupId]")}
               key={group.id}
               className="p-4 border rounded-lg shadow hover:shadow-lg transition"
             >

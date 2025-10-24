@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { fetchWithToken } from "@/lib/fetchWithToken";
+import { useRouter } from "next/navigation";
 
 interface Group {
   id: string;
@@ -14,6 +15,7 @@ interface Group {
 
 export default function StudentDashboard() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -127,7 +129,8 @@ export default function StudentDashboard() {
             {groups.map((group) => (
               <div
                 key={group.id}
-                className="p-4 border rounded-lg shadow hover:shadow-lg transition"
+                onClick={() => router.push(`./group/${group.id}`)}
+                className="p-4 border rounded-lg shadow hover:shadow-lg transition cursor-pointer"
               >
                 <h2 className="text-lg font-semibold">{group.name}</h2>
                 {group.description && (

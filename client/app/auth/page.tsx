@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -82,8 +82,12 @@ export default function AuthPage() {
           return;
         }
 
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+
+        const role = sessionData?.user?.role;
         router.push(
-          data.role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
+          role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
         );
         return;
       }
@@ -99,9 +103,14 @@ export default function AuthPage() {
         alert("Invalid credentials");
       } else {
         alert("Login successful!");
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+
+        const role = sessionData?.user?.role;
         router.push(
-          formData.role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
+          role === "ADMIN" ? "/admin/dashboard" : "/student/dashboard"
         );
+        return;
       }
     } catch (error) {
       console.error(error);
