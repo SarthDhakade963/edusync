@@ -7,6 +7,7 @@ interface AuthUser {
   name: string;
   role: string;
   accessToken?: string;
+  refreshToken?: string;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -47,7 +48,13 @@ export const authOptions: NextAuthOptions = {
           }
 
           const user = data.currentUser;
-          const accessToken = data.accessToken;
+
+          console.log(
+            "Access Token",
+            data.accessToken,
+            "Refresh Token",
+            data.refreshToken
+          );
 
           console.log("User from backend: ", user);
 
@@ -58,7 +65,8 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
-            accessToken: accessToken,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
           };
         } catch (error) {
           console.error("Auth error: ", error);
@@ -91,6 +99,7 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.role = user.role;
         token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
       }
       return token;
     },
@@ -104,6 +113,7 @@ export const authOptions: NextAuthOptions = {
         role: token.role as string,
       };
       session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
       return session;
     },
   },

@@ -1,22 +1,84 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
-const DashboardPage = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+interface Group {
+  id: string;
+  name: string;
+  membersCount: number;
+}
+
+export default function AdminDashboard() {
+  const { data: session } = useSession();
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch("/api/groups", { credentials: "include" });
+        const data = await res.json();
+        setGroups(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (status === "loading") return <div>Loading...</div>;
+    fetchGroups();
+  }, []);
 
-  return <div>Welcome, {session?.user?.name}</div>;
-};
+  const handleAssign = (groupId: string) => {
+    const assignmentTitle = prompt("Enter assignment title:");
+    if (!assignmentTitle) return;
 
-export default DashboardPage;
+    // Call backend API to create assignment for this group
+    fetch(`/api/groups/${groupId}/assignments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: assignmentTitle }),
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Assignment creation failed");
+        alert("Assignment assigned successfully!");
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Failed to assign assignment");
+      });
+  };
+
+  if (loading) return <div>Loading groups...</div>;
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      {groups.length === 0 ? (
+        <p>No groups available.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {groups.map((group) => (
+            <div
+              key={group.id}
+              className="p-4 border rounded-lg shadow hover:shadow-lg transition"
+            >
+              <h2 className="text-lg font-semibold">{group.name}</h2>
+              <p className="text-sm text-gray-500">
+                Members: {group.membersCount}
+              </p>
+              <button
+                onClick={() => handleAssign(group.id)}
+                className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              >
+                Assign Assignment
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

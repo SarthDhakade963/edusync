@@ -14,6 +14,9 @@ export const createGroup = async (
     const { name, description }: CreateGroup = req.body;
     const userId = (req as any).user.id;
 
+    console.log("Creating group with body:", req.body);
+    console.log("Authenticated user:", (req as any).user);
+
     const existingGroup = await prisma.group.findUnique({
       where: { name: name },
     });

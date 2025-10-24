@@ -8,6 +8,9 @@ export const authorize = (...roles: ("ADMIN" | "STUDENT")[]) => {
     res: Response,
     next: NextFunction
   ): Response | void => {
+    
+    console.log("Authenticated user:", (req as any).user);
+
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized." });
     }
@@ -18,6 +21,6 @@ export const authorize = (...roles: ("ADMIN" | "STUDENT")[]) => {
         .json({ message: "Forbidden. You do not have access." });
     }
 
-    return next();
+    next();
   };
 };

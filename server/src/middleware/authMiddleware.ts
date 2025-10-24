@@ -24,7 +24,9 @@ export const authenticate = (
 ): Response | void => {
   try {
     const token =
-      req.cookies.accessToken || req.headers.authorization?.split("Bearer ")[1];
+      req.cookies?.accessToken || req.headers.authorization?.split("Bearer ")[1];
+
+    console.log("ACCESS TOKEN: ", token);
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized. Token missing." });
@@ -42,9 +44,9 @@ export const authenticate = (
       role: payload.role,
     };
 
-    return next();
+    next();
   } catch (error) {
     console.error(error);
-    return res.json(401).json({ message: "Unauthorized. Invalid token" });
+    return res.status(401).json({ message: "Unauthorized. Invalid token" });
   }
 };
