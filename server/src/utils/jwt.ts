@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 // Short-lived token used to authenticate API requests.
 export const generateAccessToken = (payload: object) => {
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET as string, {
-    expiresIn: "15m",
+    expiresIn: "7d",
   });
 };
 

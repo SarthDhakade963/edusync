@@ -4,13 +4,14 @@ import prisma from "../config/prismaClient";
 interface AssignmentBody {
   assignmentId: string;
   groupId: string;
+  submissionLink: string;
 }
 export const submitAssignment = async (req: Request, res: Response) => {
   try {
     const studentId = (req as any).user.id;
-    const { assignmentId, groupId }: AssignmentBody = req.body;
+    const { assignmentId, groupId, submissionLink }: AssignmentBody = req.body;
 
-    if (!assignmentId || !groupId) {
+    if (!assignmentId || !groupId || !submissionLink) {
       return res.status(400).json({ message: "Required fields not there" });
     }
 
@@ -52,6 +53,7 @@ export const submitAssignment = async (req: Request, res: Response) => {
         groupId,
         submitted_by: studentId,
         status: "CONFIRMED",
+        submissionLink,
       },
       include: {
         assignment: true,
@@ -97,6 +99,7 @@ export const listSubmissionByAssignment = async (
           select: { id: true, name: true },
         },
       },
+      orderBy: { confirmed_at: "desc" },
     });
 
     return res.status(200).json({ submissions });
