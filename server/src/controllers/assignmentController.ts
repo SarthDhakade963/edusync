@@ -77,6 +77,8 @@ export const listGroupAssignments = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Group not found" });
     }
 
+    console.log(group);
+
     const assignments = await prisma.assignment.findMany({
       where: {
         group: { id: groupId },
@@ -89,6 +91,8 @@ export const listGroupAssignments = async (req: Request, res: Response) => {
         },
       },
     });
+
+    console.log(assignments);
 
     return res.status(200).json({ assignments });
   } catch (error) {

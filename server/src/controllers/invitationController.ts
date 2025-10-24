@@ -8,6 +8,8 @@ export const sendInvitation = async (req: Request, res: Response) => {
     const fromUserId = fromUser.id;
     const { groupId, toUserEmail }: InvitationBody = req.body;
 
+    console.log("Invitation Body :", req.body);
+
     const toUser = await prisma.user.findUnique({
       where: { email: toUserEmail },
     });
@@ -58,9 +60,11 @@ export const sendInvitation = async (req: Request, res: Response) => {
 
 export const respondToInvitation = async (req: Request, res: Response) => {
   try {
-    const receiverId = (req as any).user.id;
+    const respondId = (req as any).user.id;
     const { invitation_id } = req.params;
     const { accept } = req.body;
+
+    console.log("Invitation Request Body: ", req.body);
 
     if (!invitation_id) {
       return res.status(400).json({ message: "Invitation ID is required" });
@@ -70,7 +74,7 @@ export const respondToInvitation = async (req: Request, res: Response) => {
       where: { id: invitation_id },
     });
 
-    if (!invitation || invitation.invited_to !== receiverId) {
+    if (!invitation || invitation.invited_to !== respondId) {
       return res.status(404).json({ message: "Invitation does not exists" });
     }
 
@@ -81,11 +85,11 @@ export const respondToInvitation = async (req: Request, res: Response) => {
 
     if (accept) {
       const alreadyMember = await prisma.groupMember.findFirst({
-        where: { groupId: invitation.groupId, userId: receiverId },
+        where: { groupId: invitation.groupId, userId: respondId },
       });
       if (!alreadyMember) {
         await prisma.groupMember.create({
-          data: { groupId: invitation.groupId, userId: receiverId },
+          data: { groupId: invitation.groupId, userId: respondId },
         });
       }
     }

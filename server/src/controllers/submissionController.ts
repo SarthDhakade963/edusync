@@ -53,6 +53,7 @@ export const submitAssignment = async (req: Request, res: Response) => {
         groupId,
         submitted_by: studentId,
         status: "CONFIRMED",
+        confirmed_at: new Date(now()),
         submissionLink,
       },
       include: {
@@ -108,3 +109,7 @@ export const listSubmissionByAssignment = async (
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+function now(): string | number | Date {
+  throw new Error("Function not implemented.");
+}
+
