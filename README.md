@@ -84,15 +84,15 @@ Frontend: http://localhost:3000
 | GET    | `/submission//:assignmentId`         | Get Submission of Assignment    |
 
 
-##🗄 Database Schema
-###Tables
+## 🗄 Database Schema
+### Tables
 
 - User (id, name, email, password, role)
 - Group (id, name, ownerId)
 - Assignment (id, title, groupId, dueDate)
 - GroupMember (id, groupId, userId)
 
-###Relationships
+### Relationships
 - User ↔ GroupMember ↔ Group (Many-to-Many)
 - Group → Assignment (One-to-Many)
 - User → Group (as owner, One-to-Many)
