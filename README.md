@@ -31,7 +31,7 @@ cd server
 npm install
 cp .env.example .env    # set DB credentials
 npx prisma migrate dev  # apply migrations
-npm run dev             # start backend server (http://localhost:5000)
+npm run dev             # start backend server (http://localhost:5000/api)
 ```
 
 3. Setup Frontend
