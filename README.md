@@ -81,7 +81,7 @@ Frontend: http://localhost:3000
 | Method | Endpoint                             | Description                     |
 |--------|--------------------------------------|---------------------------------|
 | POST   | `/submission`                        | Submit Assignment               |
-| GET    | `/submission//:assignmentId`         | Get Submission of Assignment    |
+| GET    | `/submission/:assignmentId`         | Get Submission of Assignment    |
 
 
 ## 🗄 Database Schema
