@@ -70,7 +70,7 @@ export const listStudentGroups = async (req: Request, res: Response) => {
       },
     });
 
-    const userGroups = groupMemberships.map((gm) => {
+    const userGroups = groupMemberships.map((gm: any) => {
       const group = gm.group;
       return {
         id: group.id,

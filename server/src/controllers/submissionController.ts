@@ -6,6 +6,7 @@ interface AssignmentBody {
   groupId: string;
   submissionLink: string;
 }
+
 export const submitAssignment = async (req: Request, res: Response) => {
   try {
     const studentId = (req as any).user.id;
@@ -21,6 +22,13 @@ export const submitAssignment = async (req: Request, res: Response) => {
 
     if (!assignment) {
       return res.status(404).json({ message: "Assignment does not exists" });
+    }
+
+    const now = new Date();
+    if (now > assignment.due_date) {
+      return res
+        .status(400)
+        .json({ message: "Assignment submission period is over" });
     }
 
     const group = await prisma.group.findUnique({
@@ -115,13 +123,11 @@ export const getSubmissionOfAssignment = async (
       },
     });
 
-    return res
-      .status(200)
-      .json({
-        hasSubmitted: !!submission,
-        submissionStatus: submission ? submission.status : "NOT_SUBMITTED",
-        submission,
-      });
+    return res.status(200).json({
+      hasSubmitted: !!submission,
+      submissionStatus: submission ? submission.status : "NOT_SUBMITTED",
+      submission,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

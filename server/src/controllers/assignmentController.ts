@@ -190,9 +190,9 @@ export const listAssignmentSubmissionsForGroup = async (
     });
 
     // Map submissions to all members
-    const studentsWithSubmissions = group.members.map((member) => {
+    const studentsWithSubmissions = group.members.map((member: any) => {
       const submission = submissions.find(
-        (sub) => sub.submitted_by === member.userId
+        (sub: any) => sub.submitted_by === member.userId
       );
 
       return {

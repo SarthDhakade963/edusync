@@ -40,8 +40,12 @@ export default function GroupPage() {
       });
       const data = await res.json();
 
+      console.log("Assignments data: ", data);
+
       const assignmentsData = data.assignments || [];
       setAssignments(assignmentsData);
+
+      console.log(assignments);
       setGroupName(data.assignments[0]?.group?.name || "");
 
       await fetchAllSubmissionStatuses(assignmentsData);
@@ -56,6 +60,12 @@ export default function GroupPage() {
   useEffect(() => {
     if (groupId) fetchGroupAssignments();
   }, [groupId]);
+
+  const isPastDue = (dueDate: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    return now > due;
+  };
 
   const openModal = (assignmentId: string) => {
     setSelectedAssignmentId(assignmentId);
@@ -132,7 +142,7 @@ export default function GroupPage() {
       console.error("Failed to fetch submission statuses:", err);
     }
   };
-  
+
   const submittedCount = assignments.filter((a) => a.isSubmitted).length;
   const pendingCount = assignments.length - submittedCount;
 
@@ -294,13 +304,63 @@ export default function GroupPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignments.map((assignment) => (
-              <div
-                key={assignment.id}
-                className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-xl hover:border-purple-300 transition-all duration-300 relative"
-              >
-                {assignment.isSubmitted && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+            {assignments.map((assignment) => {
+              const pastDue = isPastDue(assignment.due_date);
+              return (
+                <div
+                  key={assignment.id}
+                  className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-xl hover:border-purple-300 transition-all duration-300 relative"
+                >
+                  {pastDue && (
+                    <div className="absolute top-4 left-4 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                      Deadline Passed
+                    </div>
+                  )}
+                  {assignment.isSubmitted && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Submitted
+                    </div>
+                  )}
+
+                  <div className="w-14 h-14 bg-linear-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+
+                  <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-1">
+                    {assignment.title}
+                  </h2>
+                  {assignment.description && (
+                    <p className="text-slate-600 text-sm mb-3 line-clamp-2">
+                      {assignment.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 text-slate-600 mb-4 text-sm">
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -311,89 +371,28 @@ export default function GroupPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M5 13l4 4L19 7"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    Submitted
+                    <span className="font-medium">
+                      Due:{" "}
+                      {new Date(assignment.due_date).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )}
+                    </span>
                   </div>
-                )}
 
-                <div className="w-14 h-14 bg-linear-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="w-7 h-7 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-
-                <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-1">
-                  {assignment.title}
-                </h2>
-                {assignment.description && (
-                  <p className="text-slate-600 text-sm mb-3 line-clamp-2">
-                    {assignment.description}
-                  </p>
-                )}
-
-                <div className="flex items-center gap-2 text-slate-600 mb-4 text-sm">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="font-medium">
-                    Due:{" "}
-                    {new Date(assignment.due_date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <a
-                    href={assignment.onedrive_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                    Open Assignment
-                  </a>
-
-                  {!assignment.isSubmitted && (
-                    <button
-                      onClick={() => openModal(assignment.id)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-green-600 to-green-700 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-sm hover:shadow-md"
+                  <div className="space-y-2">
+                    <a
+                      href={assignment.onedrive_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       <svg
                         className="w-5 h-5"
@@ -405,15 +404,37 @@ export default function GroupPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                         />
                       </svg>
-                      Submit Assignment
-                    </button>
-                  )}
+                      Open Assignment
+                    </a>
+
+                    {!assignment.isSubmitted && (
+                      <button
+                        onClick={() => openModal(assignment.id)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-green-600 to-green-700 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-sm hover:shadow-md"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Submit Assignment
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -29,7 +29,10 @@ interface Invitation {
 }
 
 export default function StudentDashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const userId = session?.user.id;
+  console.log("User ID", userId);
+
   const router = useRouter();
 
   const [groups, setGroups] = useState<Group[]>([]);
@@ -51,25 +54,37 @@ export default function StudentDashboard() {
   const bellRef = useRef<HTMLDivElement>(null);
   const inviteDialogRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetchGroups();
+    fetchInvitations();
+  }, [status, session]);
+
   const fetchGroups = async () => {
+    if (!session?.user?.id) return;
+    const userId = session.user.id;
+
+    console.log("Inside the function", userId);
+
     setLoading(true);
     try {
       const res = await fetchWithToken("/group/members", {
         method: "GET",
         credentials: "include",
       });
+
       const data = await res.json();
 
-      const userId = session?.user?.id;
-
+      console.log("UserID in session", userId);
+      console.log("UserID in session");
       const groupsWithOwnership = (data.groups || []).map((group: Group) => ({
         ...group,
         isOwner: group.ownerId === userId,
       }));
 
+      console.log(groupsWithOwnership);
       setGroups(groupsWithOwnership);
 
-      setGroups(data.groups || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -95,9 +110,6 @@ export default function StudentDashboard() {
   };
 
   useEffect(() => {
-    fetchGroups();
-    fetchInvitations();
-
     const handleClickOutside = (e: MouseEvent) => {
       if (
         bellRef.current &&
