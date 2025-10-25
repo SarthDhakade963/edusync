@@ -51,7 +51,7 @@ export default function AuthPage() {
 
     try {
       if (isSignup) {
-        // --- SIGNUP FLOW ---
+        // Signup
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`,
           {
@@ -70,7 +70,6 @@ export default function AuthPage() {
 
         console.log("Signup successful:", data);
 
-        // After signup, automatically log in
         const loginResult = await signIn("credentials", {
           redirect: false,
           email: formData.email,
@@ -92,7 +91,7 @@ export default function AuthPage() {
         return;
       }
 
-      // --- LOGIN FLOW ---
+      // Login
       const result = await signIn("credentials", {
         redirect: false,
         email: formData.email,
@@ -131,7 +130,7 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <h1 className="text-6xl font-bold mb-4 text-white">JoinEazy</h1>
+          <h1 className="text-6xl font-bold mb-4 text-white">EduSync</h1>
 
           <p className="text-xl text-blue-100 mb-12 leading-relaxed">
             Your comprehensive platform for managing academic excellence
@@ -178,7 +177,7 @@ export default function AuthPage() {
               <GraduationCap className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold ml-3 bg-linear-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
-              JoinEazy
+              EduSync
             </h1>
           </div>
 

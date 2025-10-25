@@ -100,7 +100,6 @@ export default function AssignmentSubmissionsPage() {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header with Back Button */}
           <div className="mb-8 flex items-center gap-4">
             <button
               onClick={() => router.back()}
@@ -116,7 +115,6 @@ export default function AssignmentSubmissionsPage() {
             </div>
           </div>
 
-          {/* Empty State */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
             <div className="w-20 h-20 bg-linear-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +138,6 @@ export default function AssignmentSubmissionsPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header with Back Button */}
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => router.back()}
@@ -156,7 +153,6 @@ export default function AssignmentSubmissionsPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center gap-4">
@@ -201,7 +197,6 @@ export default function AssignmentSubmissionsPage() {
           </div>
         </div>
 
-        {/* Submissions Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
