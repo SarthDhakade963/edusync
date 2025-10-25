@@ -59,20 +59,28 @@ export const listStudentGroups = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    const groups = await prisma.groupMember.findMany({
+    const groupMemberships = await prisma.groupMember.findMany({
       where: { userId },
       include: {
         group: {
           include: {
-            members: {
-              include: { user: true },
-            },
+            members: true,
           },
         },
       },
     });
 
-    const userGroups = groups.map((gm: { group: any }) => gm.group);
+    const userGroups = groupMemberships.map((gm) => {
+      const group = gm.group;
+      return {
+        id: group.id,
+        name: group.name,
+        ownerId: group.ownerId,
+        description: group.description,
+        created_at: group.created_at,
+        memberCount: group.members.length,
+      };
+    });
 
     return res.status(201).json({ groups: userGroups });
   } catch (error) {

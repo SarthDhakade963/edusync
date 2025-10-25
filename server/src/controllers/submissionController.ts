@@ -67,19 +67,30 @@ export const submitAssignment = async (req: Request, res: Response) => {
       .json({ message: "Assignment submitted", submission });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal Server Error (submitAssignment)" });
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error (submitAssignment)" });
   }
 };
 
-export const listSubmissionByAssignment = async (
+export const getSubmissionOfAssignment = async (
   req: Request,
   res: Response
 ) => {
   try {
+    const userId = (req as any).user.id;
     const { assignmentId } = req.params;
 
     if (!assignmentId) {
       return res.status(400).json({ message: "Assignment id not send" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User does not exists" });
     }
 
     const assignment = await prisma.assignment.findUnique({
@@ -90,20 +101,27 @@ export const listSubmissionByAssignment = async (
       return res.status(404).json({ message: "Assignment does not exists" });
     }
 
-    const submissions = await prisma.submission.findMany({
-      where: { assignmentId },
-      include: {
-        submitor: {
-          select: { id: true, name: true, email: true },
-        },
-        group: {
-          select: { id: true, name: true },
-        },
+    const submission = await prisma.submission.findFirst({
+      where: {
+        assignmentId,
+        submitted_by: userId,
       },
       orderBy: { confirmed_at: "desc" },
+      select: {
+        id: true,
+        status: true,
+        submissionLink: true,
+        confirmed_at: true,
+      },
     });
 
-    return res.status(200).json({ submissions });
+    return res
+      .status(200)
+      .json({
+        hasSubmitted: !!submission,
+        submissionStatus: submission ? submission.status : "NOT_SUBMITTED",
+        submission,
+      });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

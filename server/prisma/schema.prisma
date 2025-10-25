@@ -51,6 +51,7 @@ model Group {
   name        String   @unique
   description String
   created_at  DateTime @default(now())
+  memberCount Int @default(1)
 
   ownerId String
   owner   User   @relation("GroupOwner", fields: [ownerId], references: [id])

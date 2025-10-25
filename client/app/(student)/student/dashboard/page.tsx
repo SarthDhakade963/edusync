@@ -7,11 +7,12 @@ import { useRouter } from "next/navigation";
 import { FiBell } from "react-icons/fi";
 
 interface Group {
+  ownerId: string | undefined;
   id: string;
   name: string;
   description?: string;
-  membersCount: number;
-  isMember: boolean;
+  memberCount: number;
+  isOwner: boolean;
 }
 
 interface User {
@@ -58,6 +59,16 @@ export default function StudentDashboard() {
         credentials: "include",
       });
       const data = await res.json();
+
+      const userId = session?.user?.id;
+
+      const groupsWithOwnership = (data.groups || []).map((group: Group) => ({
+        ...group,
+        isOwner: group.ownerId === userId,
+      }));
+
+      setGroups(groupsWithOwnership);
+
       setGroups(data.groups || []);
     } catch (err) {
       console.error(err);
@@ -107,7 +118,6 @@ export default function StudentDashboard() {
 
   const handleAddGroup = async () => {
     if (!newGroupName.trim()) {
-      alert("Group name cannot be empty");
       return;
     }
 
@@ -121,14 +131,12 @@ export default function StudentDashboard() {
 
       if (!res.ok) throw new Error("Failed to create group");
 
-      alert("Group created successfully!");
       setShowModal(false);
       setNewGroupName("");
       setNewGroupDesc("");
       fetchGroups();
     } catch (err) {
       console.error(err);
-      alert("Error creating group");
     }
   };
 
@@ -144,14 +152,27 @@ export default function StudentDashboard() {
         credentials: "include",
       });
 
+      const data = await res.json();
+
+      console.log("Send Invite", data.message);
+
       if (res.status === 404) {
         setInviteError("Email not found");
         return;
       }
 
-      if (!res.ok) throw new Error("Invite failed");
+      if (res.status === 403) {
+        setInviteError(
+          data.message || "Only the group owner can send invitations"
+        );
+        return;
+      }
 
-      alert("Invite sent successfully!");
+      if (!res.ok) {
+        setInviteError(data.message || "Invite failed");
+        return;
+      }
+
       setActiveInviteGroup(null);
       setInviteEmail("");
       setInviteError("");
@@ -177,11 +198,9 @@ export default function StudentDashboard() {
 
       setInvitations((prev) => prev.filter((inv) => inv.id !== inviteId));
 
-      alert(`Invitation ${action.toLowerCase()}ed successfully!`);
-      fetchGroups(); 
+      fetchGroups();
     } catch (err) {
       console.error(err);
-      alert(`Error: Unable to ${action} invitation`);
     }
   };
 
@@ -212,7 +231,10 @@ export default function StudentDashboard() {
               onClick={() => setShowInvites((prev) => !prev)}
               className="relative p-3 rounded-xl hover:bg-white transition-all duration-200 group"
             >
-              <FiBell size={24} className="text-slate-600 group-hover:text-blue-600 transition-colors" />
+              <FiBell
+                size={24}
+                className="text-slate-600 group-hover:text-blue-600 transition-colors"
+              />
               {invitations.length > 0 && (
                 <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-linear-to-r from-red-500 to-red-600 rounded-full animate-pulse">
                   {invitations.length}
@@ -225,7 +247,8 @@ export default function StudentDashboard() {
                 <div className="bg-linear-to-r from-blue-600 to-blue-700 px-5 py-4">
                   <h3 className="text-white font-bold text-lg">Invitations</h3>
                   <p className="text-blue-100 text-sm">
-                    {invitations.length} pending invitation{invitations.length !== 1 ? "s" : ""}
+                    {invitations.length} pending invitation
+                    {invitations.length !== 1 ? "s" : ""}
                   </p>
                 </div>
 
@@ -233,12 +256,26 @@ export default function StudentDashboard() {
                   {invitations.length === 0 ? (
                     <div className="p-8 text-center">
                       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        <svg
+                          className="w-8 h-8 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                          />
                         </svg>
                       </div>
-                      <p className="text-slate-600 font-medium">All caught up!</p>
-                      <p className="text-slate-500 text-sm">No pending invitations</p>
+                      <p className="text-slate-600 font-medium">
+                        All caught up!
+                      </p>
+                      <p className="text-slate-500 text-sm">
+                        No pending invitations
+                      </p>
                     </div>
                   ) : (
                     invitations.map((invite) => (
@@ -248,27 +285,46 @@ export default function StudentDashboard() {
                       >
                         <div className="flex items-start gap-3 mb-3">
                           <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shrink-0">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <svg
+                              className="w-5 h-5 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
                             </svg>
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-slate-900">{invite.group.name}</p>
+                            <p className="font-bold text-slate-900">
+                              {invite.group.name}
+                            </p>
                             <p className="text-sm text-slate-600">
-                              Invited by <span className="font-medium">{invite.invitor.name}</span>
+                              Invited by{" "}
+                              <span className="font-medium">
+                                {invite.invitor.name}
+                              </span>
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button
                             className="flex-1 px-4 py-2 bg-linear-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
-                            onClick={() => respondToInvite(invite.id, "ACCEPTED")}
+                            onClick={() =>
+                              respondToInvite(invite.id, "ACCEPTED")
+                            }
                           >
                             Accept
                           </button>
                           <button
                             className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all duration-200 font-medium text-sm"
-                            onClick={() => respondToInvite(invite.id, "DECLINED")}
+                            onClick={() =>
+                              respondToInvite(invite.id, "DECLINED")
+                            }
                           >
                             Decline
                           </button>
@@ -285,18 +341,42 @@ export default function StudentDashboard() {
         {groups.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
             <div className="w-20 h-20 bg-linear-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg
+                className="w-10 h-10 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No Groups Yet</h3>
-            <p className="text-slate-600 mb-6">Create your first group to get started or wait for an invitation</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              No Groups Yet
+            </h3>
+            <p className="text-slate-600 mb-6">
+              Create your first group to get started or wait for an invitation
+            </p>
             <button
               onClick={() => setShowModal(true)}
               className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-green-600 to-green-700 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-md hover:shadow-lg"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Create Group
             </button>
@@ -308,8 +388,18 @@ export default function StudentDashboard() {
                 onClick={() => setShowModal(true)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-green-600 to-green-700 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-md hover:shadow-lg"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Create Group
               </button>
@@ -323,8 +413,18 @@ export default function StudentDashboard() {
                   className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
                 >
                   <div className="w-14 h-14 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
                     </svg>
                   </div>
 
@@ -337,25 +437,53 @@ export default function StudentDashboard() {
                     </p>
                   )}
                   <div className="flex items-center text-slate-600 mb-4">
-                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <svg
+                      className="w-4 h-4 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
                     </svg>
-                    <span className="text-sm font-medium">{group.membersCount} members</span>
+                    <span className="text-sm font-medium">
+                      {group.memberCount} members
+                    </span>
                   </div>
 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!group.isOwner) return;
                       setActiveInviteGroup(
                         activeInviteGroup === group.id ? null : group.id
                       );
                       setInviteEmail("");
                       setInviteError("");
                     }}
-                    className="w-full px-4 py-2.5 bg-linear-to-r from-purple-600 to-purple-700 text-white font-medium rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                    className={`w-full px-4 py-2.5 text-white font-medium rounded-xl flex items-center justify-center gap-2
+                        ${
+                          group.isOwner
+                            ? "bg-linear-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-sm hover:shadow-md cursor-pointer"
+                            : "bg-gray-300 cursor-not-allowed"
+                        }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                      />
                     </svg>
                     Invite Member
                   </button>
@@ -366,7 +494,9 @@ export default function StudentDashboard() {
                       onClick={(e) => e.stopPropagation()}
                       className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                     >
-                      <h4 className="font-semibold text-slate-900 mb-3">Invite to {group.name}</h4>
+                      <h4 className="font-semibold text-slate-900 mb-3">
+                        Invite to {group.name}
+                      </h4>
                       <input
                         type="email"
                         value={inviteEmail}
@@ -376,8 +506,18 @@ export default function StudentDashboard() {
                       />
                       {inviteError && (
                         <p className="text-red-600 text-xs mt-2 flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                           </svg>
                           {inviteError}
                         </p>
@@ -401,8 +541,12 @@ export default function StudentDashboard() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all animate-in zoom-in-95 duration-200">
             <div className="bg-linear-to-r from-green-600 to-green-700 px-6 py-5 rounded-t-2xl">
-              <h2 className="text-2xl font-bold text-white">Create New Group</h2>
-              <p className="text-green-100 text-sm mt-1">Start collaborating with your team</p>
+              <h2 className="text-2xl font-bold text-white">
+                Create New Group
+              </h2>
+              <p className="text-green-100 text-sm mt-1">
+                Start collaborating with your team
+              </p>
             </div>
 
             <div className="p-6 space-y-4">

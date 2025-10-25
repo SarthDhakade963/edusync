@@ -89,7 +89,17 @@ export const respondToInvitation = async (req: Request, res: Response) => {
       });
       if (!alreadyMember) {
         await prisma.groupMember.create({
-          data: { groupId: invitation.groupId, userId: respondId },
+          data: {
+            groupId: invitation.groupId,
+            userId: respondId,
+          },
+        });
+
+        await prisma.group.update({
+          where: { id: invitation.groupId },
+          data: {
+            memberCount: { increment: 1 },
+          },
         });
       }
     }

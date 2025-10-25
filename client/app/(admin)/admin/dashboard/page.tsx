@@ -207,7 +207,7 @@ export default function AdminDashboard() {
                   onChange={(e) =>
                     setAssignmentData({ ...assignmentData, onedrive_link: e.target.value })
                   }
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                  className="placeholder-gray-400 w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                 />
               </div>
             </div>
