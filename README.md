@@ -118,7 +118,6 @@ ER Diagram:
 - Stores users, groups, group members, and assignments.
 - Prisma ORM for schema management & queries.
 
-Flow
 ![ER Diagram](client/public/Architecture_Overview.png)
 
 ## 💡 Key Design & Deployment Decisions
