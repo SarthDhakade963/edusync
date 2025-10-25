@@ -53,7 +53,7 @@ export const submitAssignment = async (req: Request, res: Response) => {
         groupId,
         submitted_by: studentId,
         status: "CONFIRMED",
-        confirmed_at: new Date(now()),
+        confirmed_at: new Date(),
         submissionLink,
       },
       include: {
@@ -67,7 +67,7 @@ export const submitAssignment = async (req: Request, res: Response) => {
       .json({ message: "Assignment submitted", submission });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error (submitAssignment)" });
   }
 };
 
@@ -109,7 +109,3 @@ export const listSubmissionByAssignment = async (
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-function now(): string | number | Date {
-  throw new Error("Function not implemented.");
-}
-

@@ -72,89 +72,165 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <div>Loading groups...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent mb-4"></div>
+          <p className="text-slate-600 font-medium">Loading groups...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-      {groups.length === 0 ? (
-        <p>No groups available.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {groups.map((group) => (
-            <div
-              key={group.id}
-              className="p-4 border rounded-lg shadow hover:shadow-lg transition cursor-pointer"
-              onClick={() => router.push(`./group/${group.id}`)} // click card => open group page
-            >
-              <h2 className="text-lg font-semibold">{group.name}</h2>
-              <p className="text-sm text-gray-500">
-                Members: {group.membersCount}
-              </p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent card click
-                  openAssignModal(group.id);
-                }}
-                className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                Assign Assignment
-              </button>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+          <p className="text-slate-600">Manage your groups and assignments</p>
         </div>
-      )}
+
+        {/* Groups Grid */}
+        {groups.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Groups Yet</h3>
+            <p className="text-slate-600">Create your first group to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {groups.map((group) => (
+              <div
+                key={group.id}
+                className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                onClick={() => router.push(`./group/${group.id}`)}
+              >
+                {/* Group Icon */}
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+
+                {/* Group Info */}
+                <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  {group.name}
+                </h2>
+                <div className="flex items-center text-slate-600 mb-4">
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">{group.membersCount} members</span>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openAssignModal(group.id);
+                  }}
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Assign Assignment
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Assignment Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">Assign Assignment</h2>
-            <input
-              type="text"
-              placeholder="Title"
-              value={assignmentData.title}
-              onChange={(e) =>
-                setAssignmentData({ ...assignmentData, title: e.target.value })
-              }
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <textarea
-              placeholder="Description"
-              value={assignmentData.description}
-              onChange={(e) =>
-                setAssignmentData({ ...assignmentData, description: e.target.value })
-              }
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="date"
-              placeholder="Due Date"
-              value={assignmentData.due_date}
-              onChange={(e) =>
-                setAssignmentData({ ...assignmentData, due_date: e.target.value })
-              }
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="text"
-              placeholder="OneDrive Link"
-              value={assignmentData.onedrive_link}
-              onChange={(e) =>
-                setAssignmentData({ ...assignmentData, onedrive_link: e.target.value })
-              }
-              className="w-full mb-4 p-2 border rounded"
-            />
-            <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-white">Assign New Assignment</h2>
+              <p className="text-blue-100 text-sm mt-1">Fill in the assignment details below</p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter assignment title"
+                  value={assignmentData.title}
+                  onChange={(e) =>
+                    setAssignmentData({ ...assignmentData, title: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Enter assignment description"
+                  value={assignmentData.description}
+                  onChange={(e) =>
+                    setAssignmentData({ ...assignmentData, description: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={assignmentData.due_date}
+                  onChange={(e) =>
+                    setAssignmentData({ ...assignmentData, due_date: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  OneDrive Link
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://onedrive.live.com/..."
+                  value={assignmentData.onedrive_link}
+                  onChange={(e) =>
+                    setAssignmentData({ ...assignmentData, onedrive_link: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAssignSubmit}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Assign
               </button>
